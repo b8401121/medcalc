@@ -59,8 +59,6 @@ android.allow_backup = True
 # In past, was 'android.arch' as string with single work. 'armeabi-v7a' is still common
 android.archs = arm64-v8a, armeabi-v7a
 
-# (bool) enables Android auto backup feature (Android API >=23)
-android.allow_backup = True
 
 [buildozer]
 
