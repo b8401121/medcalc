@@ -26,6 +26,12 @@ jobs:
           restore-keys: |
             buildozer-${{ runner.os }}-v3-
 
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
       - name: Setup Android cmdline-tools for Buildozer
         run: |
           SDK_DIR="$HOME/.buildozer/android/platform/android-sdk"
