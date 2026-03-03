@@ -1,0 +1,21 @@
+# Buildozer build artifacts
+.buildozer/
+bin/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Kivy
+*.kv~
+
+# Font files (large, not needed in git - downloaded by CI)
+NotoSansCJK.otf
+msjh.ttc
+
+# IDE
+.vscode/
+*.idea/
+*.log
