@@ -3,7 +3,7 @@ name: Build Android APK
 on:
   push:
     branches: [ main, master ]
-  workflow_dispatch:   # 允許手動觸發
+  workflow_dispatch:
 
 jobs:
   build:
@@ -13,28 +13,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Python 3.10
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.10'
-
-      - name: Install system dependencies
+      - name: Download CJK Font
         run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            python3-pip git zip unzip \
-            openjdk-17-jdk autoconf libtool pkg-config \
-            zlib1g-dev libncurses5-dev cmake libffi-dev \
-            libssl-dev build-essential
-
-      - name: Install Buildozer and Cython
-        run: |
-          pip install --upgrade buildozer cython
-
-      - name: Download CJK Font (Noto Sans CJK TC)
-        run: |
-          wget -q "https://github.com/googlefonts/noto-cjk/raw/main/Sans/OTF/TraditionalChinese/NotoSansCJKtc-Regular.otf" -O NotoSansCJK.otf
-          echo "Font downloaded: $(ls -lh NotoSansCJK.otf)"
+          wget -q "https://github.com/googlefonts/noto-cjk/raw/main/Sans/OTF/TraditionalChinese/NotoSansCJKtc-Regular.otf" \
+            -O NotoSansCJK.otf
+          ls -lh NotoSansCJK.otf
 
       - name: Cache Buildozer Global Directory
         uses: actions/cache@v4
@@ -44,19 +27,13 @@ jobs:
           restore-keys: |
             buildozer-${{ runner.os }}-
 
-      - name: Accept Android SDK Licenses
+      - name: Build APK with Buildozer Docker
         run: |
-          mkdir -p $HOME/.buildozer/android/platform/android-sdk/licenses
-          # Standard SDK license
-          printf '\n8933bad161af4178b1185d1a37fbf41ea5269c55\n24333f8a63b6825ea9c5514f83c2829b004d1fee\nd56f5187479451eabf01fb78af6dfcb131a6481e\n' \
-            > $HOME/.buildozer/android/platform/android-sdk/licenses/android-sdk-license
-          # Preview / RC license (fixes the 37.0.0-rc2 issue)
-          printf '\n84831b9409646a918e30573bab4c9c91346d8abd\n504667f4c0de7af1a06de9f4b1727b84351f2910\n' \
-            > $HOME/.buildozer/android/platform/android-sdk/licenses/android-sdk-preview-license
-
-      - name: Build APK with Buildozer
-        run: |
-          yes | buildozer -v android debug 2>&1
+          docker run --rm \
+            -v ${{ github.workspace }}:/home/user/hostcwd \
+            -v $HOME/.buildozer:/home/user/.buildozer \
+            kivy/buildozer:latest \
+            android debug
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
