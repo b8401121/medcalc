@@ -31,8 +31,9 @@ jobs:
           docker run --rm \
             -v ${{ github.workspace }}:/home/user/hostcwd \
             -v $HOME/.buildozer:/home/user/.buildozer \
+            --entrypoint /bin/bash \
             kivy/buildozer:latest \
-            /bin/bash -c "yes | buildozer -v android debug 2>&1"
+            -c "yes | buildozer -v android debug 2>&1"
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
