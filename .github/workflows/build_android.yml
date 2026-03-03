@@ -22,22 +22,34 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.buildozer
-          key: buildozer-${{ runner.os }}-${{ hashFiles('buildozer.spec') }}
+          key: buildozer-${{ runner.os }}-v3-${{ hashFiles('buildozer.spec') }}
           restore-keys: |
-            buildozer-${{ runner.os }}-
+            buildozer-${{ runner.os }}-v3-
 
-      - name: Pre-accept Android SDK licenses
+      - name: Setup Android cmdline-tools for Buildozer
         run: |
-          # Pre-write license hashes into the mounted buildozer SDK directory
-          # so the Docker container sees them as already accepted
-          SDK_LICENSES="$HOME/.buildozer/android/platform/android-sdk/licenses"
-          mkdir -p "$SDK_LICENSES"
-          # Standard SDK license
-          printf '\n8933bad161af4178b1185d1a37fbf41ea5269c55\n24333f8a63b6825ea9c5514f83c2829b004d1fee\nd56f5187479451eabf01fb78af6dfcb131a6481e\n' \
-            > "$SDK_LICENSES/android-sdk-license"
-          # Preview / RC license (covers build-tools 37-rc2)
-          printf '\n84831b9409646a918e30573bab4c9c91346d8abd\n504667f4c0de7af1a06de9f4b1727b84351f2910\n' \
-            > "$SDK_LICENSES/android-sdk-preview-license"
+          SDK_DIR="$HOME/.buildozer/android/platform/android-sdk"
+          TOOLS_DIR="$SDK_DIR/tools"
+          mkdir -p "$TOOLS_DIR/bin"
+
+          # Download Android command-line tools (sdkmanager)
+          wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip \
+            -O /tmp/cmdline-tools.zip
+          unzip -q /tmp/cmdline-tools.zip -d /tmp/cmdtools
+
+          # Copy sdkmanager to the LEGACY path that Buildozer expects
+          cp /tmp/cmdtools/cmdline-tools/bin/sdkmanager "$TOOLS_DIR/bin/"
+          cp -r /tmp/cmdtools/cmdline-tools/lib "$TOOLS_DIR/"
+          chmod +x "$TOOLS_DIR/bin/sdkmanager"
+
+          # Accept all licenses (standard + preview)
+          yes | "$TOOLS_DIR/bin/sdkmanager" --sdk_root="$SDK_DIR" --licenses 2>/dev/null || true
+
+          # Install stable build-tools 34 (avoids the RC license issue)
+          "$TOOLS_DIR/bin/sdkmanager" --sdk_root="$SDK_DIR" \
+            "build-tools;34.0.0" \
+            "platforms;android-34" \
+            "platform-tools"
 
       - name: Build APK with Buildozer Docker
         run: |
